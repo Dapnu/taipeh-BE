@@ -188,7 +188,7 @@ const TrafficView: React.FC<TrafficViewProps> = ({ selectedModel }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/detectors/traffic?model=${selectedModel}&time=${time}`
+        `https://taipeisim-be.ruangopini.app/api/v1/detectors/traffic?model=${selectedModel}&time=${time}`
       );
 
       if (!response.ok) {

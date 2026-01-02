@@ -57,7 +57,7 @@ function App() {
 
     try {
       // Call our backend API
-      const response = await fetch('http://localhost:8000/api/v1/routes/optimize', {
+      const response = await fetch('https://taipeisim-be.ruangopini.app/api/v1/routes/optimize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
