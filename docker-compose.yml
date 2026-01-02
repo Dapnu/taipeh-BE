@@ -15,8 +15,8 @@ services:
       - API_V1_PREFIX=/api/v1
       - ALLOWED_ORIGINS=*
     volumes:
-      # Mount graphml file from host
-      - ./data/taipei.graphml:/app/data/taipei.graphml:ro
+      # Mount graphml file from host (uploaded to VPS separately)
+      - /opt/data/taipei.graphml:/app/data/taipei.graphml:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
