@@ -1,6 +1,8 @@
 # Build stage
 FROM node:18-alpine as builder
 
+RUN apk add --no-cache wget
+
 WORKDIR /app
 
 # Copy package files
