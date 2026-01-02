@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     @property
     def origins_list(self) -> List[str]:
         """Parse ALLOWED_ORIGINS string into a list"""
+        if self.ALLOWED_ORIGINS == "*":
+            return ["*"]
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
 
