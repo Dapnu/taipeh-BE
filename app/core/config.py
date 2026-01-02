@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     
     # API Settings
     API_V1_PREFIX: str = "/api/v1"
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    ALLOWED_ORIGINS: str = "https://taipeisim.ruangopini.app,http://localhost:3000,http://localhost:5173"
     
     # Supabase Configuration (optional for deployment)
     SUPABASE_URL: str = ""
