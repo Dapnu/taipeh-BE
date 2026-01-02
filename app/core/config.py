@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     
-    # Supabase Configuration
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
+    # Supabase Configuration (optional for deployment)
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
     SUPABASE_SERVICE_KEY: str | None = None
     
     model_config = SettingsConfigDict(
