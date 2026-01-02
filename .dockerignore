@@ -1,0 +1,49 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large files (will be mounted as volume)
+*.graphml
+traffic_clean_taipeh.csv
+
+# Development
+*.tmp
+tmp/
+test_*.py

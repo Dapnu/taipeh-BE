@@ -104,6 +104,7 @@ class PathInfo(BaseModel):
     total_weight: float = Field(..., description="Total path weight/cost")
     algorithm: str = Field(..., description="Algorithm used (dijkstra/astar)")
     traffic_levels: Optional[Dict[int, float]] = Field(None, description="Traffic levels by detector ID")
+    traffic_categories: Optional[Dict[str, int]] = Field(None, description="Count of detectors by traffic category (low/moderate/high/severe)")
     avg_traffic: Optional[float] = Field(None, description="Average traffic along path")
     max_traffic: Optional[float] = Field(None, description="Maximum traffic along path")
     min_traffic: Optional[float] = Field(None, description="Minimum traffic along path")

@@ -883,40 +883,36 @@ class RoutingService:
                     traffic = predictions[det_id][departure_interval]
             
             # ============================================================
-            # TRAFFIC WEIGHT CONFIGURATION
+            # TRAFFIC WEIGHT CONFIGURATION - MAXIMUM AVOIDANCE
             # ============================================================
-            # Adjust these values to change how much the algorithm avoids traffic
+            # Goal: ABSOLUTELY AVOID HIGH TRAFFIC (>= 50)
             #
-            # METHOD 1: Linear scaling (current)
-            #   Formula: multiplier = 1 + (traffic / DIVISOR)
-            #   - DIVISOR = 400 (default): traffic 400 = 2x cost
-            #   - DIVISOR = 200 (aggressive): traffic 200 = 2x cost (avoids moderate traffic more)
-            #   - DIVISOR = 600 (relaxed): traffic 600 = 2x cost (tolerates more traffic)
-            #
-            # METHOD 2: Power scaling (exponential penalty for high traffic)
-            #   Formula: multiplier = 1 + (traffic / DIVISOR) ^ POWER
-            #   - POWER = 1.0 (linear, default)
-            #   - POWER = 1.5 (moderate exponential)
-            #   - POWER = 2.0 (strong exponential, heavily avoids congestion)
-            #
-            # METHOD 3: Threshold-based (discrete levels)
-            #   Custom thresholds for different traffic levels
+            # Strategy: EXTREME exponential penalty
+            # - Low traffic (< 25): minimal penalty (~1x)
+            # - Moderate traffic (25-50): moderate penalty (~2-5x)
+            # - High traffic (50-100): MASSIVE penalty (100x-500x)
+            # - Severe traffic (>= 100): PROHIBITIVE penalty (1000x+)
             # ============================================================
             
-            # Configuration parameters (adjust these!)
-            TRAFFIC_DIVISOR = 1.0    # Lower = more sensitive to traffic
-            TRAFFIC_POWER = 10.0        # Higher = exponentially penalize high traffic
-            
-            # Calculate multiplier
-            if TRAFFIC_POWER == 1.0:
-                # Linear scaling
-                traffic_multiplier = 1.0 + (traffic / TRAFFIC_DIVISOR)
+            # ULTRA-AGGRESSIVE configuration
+            if traffic < 25:
+                # Low traffic: minimal penalty
+                traffic_multiplier = 1.0 + (traffic / 100.0)  # 1.0x - 1.25x
+            elif traffic < 50:
+                # Moderate traffic: noticeable penalty
+                # 25 → 2x, 50 → 5x
+                traffic_multiplier = 1.0 + ((traffic - 25) / 10.0)  # 1.0x - 3.5x
+            elif traffic < 100:
+                # HIGH traffic: MASSIVE penalty to force A* to find alternatives
+                # 50 → 100x, 75 → 300x, 100 → 500x
+                traffic_multiplier = 100.0 + ((traffic - 50) * 8.0)
             else:
-                # Power scaling for non-linear penalty
-                traffic_multiplier = 1.0 + ((traffic / TRAFFIC_DIVISOR) ** TRAFFIC_POWER)
+                # SEVERE traffic: PROHIBITIVE penalty (make it almost impossible)
+                # 100 → 500x, 200 → 1500x, 400 → 3500x
+                traffic_multiplier = 500.0 + ((traffic - 100) * 10.0)
             
-            # Optional: Cap the maximum multiplier to prevent extreme values
-            MAX_MULTIPLIER = 5.0
+            # Cap at 5000x
+            MAX_MULTIPLIER = 5000.0
             traffic_multiplier = min(traffic_multiplier, MAX_MULTIPLIER)
             
             return base_length * traffic_multiplier
@@ -925,8 +921,8 @@ class RoutingService:
             # Find fastest path with traffic weighting using A* algorithm
             # A* requires an admissible heuristic: h(n) <= actual cost from n to goal
             # 
-            # For traffic-weighted edges: actual_cost = distance × (1 + traffic/400)
-            # Since traffic >= 0, multiplier >= 1, so actual_cost >= distance
+            # Note: With aggressive traffic penalties, heuristic is still admissible
+            # because we're only increasing edge costs, not reducing them.
             # 
             # Using h(n) = euclidean_distance (straight-line) is ADMISSIBLE because:
             # - euclidean_distance <= road_distance (roads are never shorter than straight line)
@@ -1257,10 +1253,13 @@ class RoutingService:
         """
         models = []
         for f in self.predictions_dir.glob("predictions_*_*.csv"):
-            # Extract model name from filename
+            # Extract model name from filename: predictions_oct1_2017_MODEL.csv
+            # For multi-word models like gcn_gru: predictions_oct1_2017_gcn_gru.csv
             parts = f.stem.split('_')
-            if len(parts) >= 3:
-                model_name = parts[-1]
+            if len(parts) >= 4:
+                # Join everything after date parts (oct1, 2017) as model name
+                # predictions_oct1_2017_gcn_gru -> ['predictions', 'oct1', '2017', 'gcn', 'gru']
+                model_name = '_'.join(parts[3:])  # Join from index 3 onwards
                 if model_name not in models:
                     models.append(model_name)
         return sorted(models)

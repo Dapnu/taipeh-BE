@@ -1,0 +1,230 @@
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+.search-modal {
+  background: #2a2a2a;
+  border: 1px solid rgba(212, 197, 160, 0.3);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(212, 197, 160, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(212, 197, 160, 0.3);
+}
+
+.search-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #d4c5a0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #a89976;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(212, 197, 160, 0.1);
+  color: #d4c5a0;
+}
+
+.search-body {
+  padding: 20px;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-input-container {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 45px 12px 15px;
+  border: 2px solid rgba(212, 197, 160, 0.3);
+  background: rgba(42, 42, 42, 0.8);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #d4c5a0;
+  transition: border-color 0.2s;
+}
+
+.search-input::placeholder {
+  color: rgba(168, 153, 118, 0.5);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #d4c5a0;
+  box-shadow: 0 0 0 2px rgba(212, 197, 160, 0.1);
+}
+
+.search-spinner {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #d4c5a0;
+  animation: spin 1s linear infinite;
+}
+
+.search-error {
+  padding: 10px;
+  background: rgba(139, 34, 34, 0.2);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  border-radius: 6px;
+  color: #ffaaaa;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.result-item {
+  padding: 12px;
+  border-bottom: 1px solid rgba(212, 197, 160, 0.1);
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.result-item:hover {
+  background: rgba(212, 197, 160, 0.1);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #d4c5a0;
+  margin-bottom: 4px;
+}
+
+.result-address {
+  font-size: 0.85rem;
+  color: #a89976;
+  line-height: 1.4;
+}
+
+.no-results,
+.search-hint {
+  text-align: center;
+  padding: 30px 20px;
+  color: #a89976;
+  font-size: 0.95rem;
+}
+
+.search-hint {
+  color: #a89976;
+  font-style: italic;
+}
+
+.search-footer {
+  border-top: 1px solid rgba(212, 197, 160, 0.3);
+  padding-top: 15px;
+}
+
+.search-footer p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a89976;
+  font-style: italic;
+}
+
+/* Scrollbar styling */
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: rgba(26, 26, 26, 0.5);
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: rgba(212, 197, 160, 0.5);
+  border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 197, 160, 0.7);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .search-modal {
+    width: 95%;
+    max-height: 85vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-header {
+    padding: 15px;
+  }
+
+  .search-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .search-body {
+    padding: 15px;
+  }
+
+  .search-input {
+    font-size: 0.95rem;
+  }
+}

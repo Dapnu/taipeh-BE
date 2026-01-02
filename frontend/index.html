@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Route Optimizer - Taipei</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 380px;
+            background: #16213e;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .logo h1 {
+            color: #00d9ff;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .logo p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #aaa;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+        
+        .coord-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .coord-row .form-group {
+            flex: 1;
+        }
+        
+        .section-title {
+            color: #00d9ff;
+            font-size: 0.9rem;
+            margin: 20px 0 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+        
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #0066ff);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: #444;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #333;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #444;
+        }
+        
+        /* Results */
+        .results {
+            margin-top: 25px;
+        }
+        
+        .result-card {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        
+        .result-card.shortest {
+            border-color: #3388ff;
+        }
+        
+        .result-card.fastest {
+            border-color: #33cc33;
+        }
+        
+        .result-card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .result-card.shortest h3 {
+            color: #3388ff;
+        }
+        
+        .result-card.fastest h3 {
+            color: #33cc33;
+        }
+        
+        .result-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .stat-item {
+            background: #16213e;
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
+        
+        .stat-item .label {
+            font-size: 0.7rem;
+            color: #888;
+        }
+        
+        .stat-item .value {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        
+        /* Traffic Legend */
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 10px;
+        }
+        
+        .legend h4 {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        /* Map */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Instructions */
+        .instructions {
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        .instructions strong {
+            color: #00d9ff;
+        }
+        
+        /* Map Controls Info */
+        .map-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(22, 33, 62, 0.95);
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        /* Waypoint List */
+        .waypoint-list {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .waypoint-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #16213e;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+        }
+        
+        .waypoint-marker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .waypoint-info {
+            flex: 1;
+        }
+        
+        .waypoint-name {
+            font-weight: 500;
+        }
+        
+        .waypoint-traffic {
+            font-size: 0.7rem;
+            color: #888;
+        }
+        
+        /* Error Message */
+        .error-msg {
+            background: rgba(255, 77, 77, 0.2);
+            border: 1px solid #ff4d4d;
+            color: #ff4d4d;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        
+        .error-msg.active {
+            display: block;
+        }
+        
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .toggle-group label {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #00d9ff, #0066ff);
+        }
+        
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Detector Count Badge */
+        .detector-count {
+            background: #333;
+            color: #00d9ff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>🚗 Traffic Route Optimizer</h1>
+                <p>Taipei Traffic Prediction System</p>
+            </div>
+            
+            <div class="instructions">
+                <strong>💡 Tip:</strong> Click on the map to set start (first click) and end (second click) points, or enter coordinates manually.
+            </div>
+            
+            <!-- Start Point -->
+            <div class="section-title">📍 Start Point</div>
+            <div class="coord-row">
+                <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" id="start-lat" step="0.0001" value="25.0223" placeholder="25.0223">
+                </div>
+                <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" id="start-lon" step="0.0001" value="121.5436" placeholder="121.5436">
+                </div>
+            </div>
+            
+            <!-- End Point -->
+            <div class="section-title">🏁 End Point</div>
+            <div class="coord-row">
+                <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" id="end-lat" step="0.0001" value="25.0671" placeholder="25.0671">
+                </div>
+                <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" id="end-lon" step="0.0001" value="121.4799" placeholder="121.4799">
+                </div>
+            </div>
+            
+            <!-- Settings -->
+            <div class="section-title">⚙️ Settings</div>
+            <div class="form-group">
+                <label>Departure Time</label>
+                <input type="time" id="departure-time" value="08:30">
+            </div>
+            <div class="form-group">
+                <label>Prediction Model</label>
+                <select id="model">
+                    <option value="catboost">CatBoost (Recommended)</option>
+                    <option value="xgboost">XGBoost</option>
+                    <option value="lightgbm">LightGBM</option>
+                    <option value="forest">Random Forest</option>
+                    <option value="ridge">Ridge Regression</option>
+                    <option value="lasso">Lasso Regression</option>
+                    <option value="elasticnet">ElasticNet</option>
+                    <option value="regression">Linear Regression</option>
+                </select>
+            </div>
+            
+            <!-- Map Display Options -->
+            <div class="section-title">🗺️ Map Options</div>
+            <div class="toggle-group">
+                <label>Show All Detectors <span class="detector-count" id="detector-count">0</span></label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="show-all-detectors" onchange="toggleAllDetectors()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <!-- Buttons -->
+            <button class="btn btn-primary" id="calculate-btn" onclick="calculateRoute()">
+                🔍 Calculate Routes
+            </button>
+            <button class="btn btn-secondary" onclick="clearAll()">
+                🗑️ Clear All
+            </button>
+            
+            <!-- Error Message -->
+            <div class="error-msg" id="error-msg"></div>
+            
+            <!-- Results -->
+            <div class="results" id="results" style="display: none;">
+                <div class="section-title">📊 Route Comparison</div>
+                
+                <!-- Shortest Path -->
+                <div class="result-card shortest">
+                    <h3>
+                        <span style="font-size: 1.2rem;">📏</span>
+                        Shortest Path (Dijkstra)
+                    </h3>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <div class="label">Detectors</div>
+                            <div class="value" id="shortest-waypoints">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Distance</div>
+                            <div class="value" id="shortest-distance">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Avg Traffic</div>
+                            <div class="value" id="shortest-traffic">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Max Traffic</div>
+                            <div class="value" id="shortest-max-traffic">-</div>
+                        </div>
+                    </div>
+                    <!-- Shortest Path Waypoint List -->
+                    <div class="waypoint-list" id="shortest-waypoint-list"></div>
+                </div>
+                
+                <!-- Fastest Path -->
+                <div class="result-card fastest">
+                    <h3>
+                        <span style="font-size: 1.2rem;">⚡</span>
+                        Fastest Path (Traffic-Aware)
+                    </h3>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <div class="label">Detectors</div>
+                            <div class="value" id="fastest-waypoints">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Distance</div>
+                            <div class="value" id="fastest-distance">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Avg Traffic</div>
+                            <div class="value" id="fastest-traffic">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Max Traffic</div>
+                            <div class="value" id="fastest-max-traffic">-</div>
+                        </div>
+                    </div>
+                    <!-- Fastest Path Waypoint List -->
+                    <div class="waypoint-list" id="fastest-waypoint-list"></div>
+                </div>
+                
+                <!-- Comparison Summary -->
+                <div class="result-card" style="border-color: #00d9ff; background: rgba(0,217,255,0.1);">
+                    <h3 style="color: #00d9ff;">
+                        <span style="font-size: 1.2rem;">📈</span>
+                        Comparison
+                    </h3>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <div class="label">Same Path?</div>
+                            <div class="value" id="comparison-same">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Traffic Diff</div>
+                            <div class="value" id="comparison-traffic-diff">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="legend">
+                <h4>🚦 Traffic Level Colors</h4>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ff00;"></div>
+                    <span>Free Flow (0-100)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #7fff00;"></div>
+                    <span>Light (100-250)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffff00;"></div>
+                    <span>Moderate (250-450)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff8c00;"></div>
+                    <span>Heavy (450-650)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff0000;"></div>
+                    <span>Congested (650-800)</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map -->
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="map-info">
+                Click map to set points | Blue = Shortest | Green = Fastest
+            </div>
+            <div class="loading-overlay" id="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // API Base URL
+        const API_BASE = 'http://localhost:8000/api/v1';
+        
+        // Map initialization
+        const map = L.map('map').setView([25.045, 121.52], 13);
+        
+        // Add tile layer (Dark theme)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Layers
+        let startMarker = null;
+        let endMarker = null;
+        let shortestPathLayer = null;
+        let fastestPathLayer = null;
+        let detectorsLayer = null;
+        let allDetectorsLayer = null;  // Layer for all detectors
+        let allDetectorsData = [];     // Store all detectors data
+        let clickCount = 0;
+        
+        // Custom icons
+        const startIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background: #00d9ff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">🚗</div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        
+        const endIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background: #ff4757; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">🏁</div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        
+        // Get traffic color based on level
+        function getTrafficColor(traffic) {
+            if (traffic < 100) return '#00ff00';      // Free flow - green
+            if (traffic < 250) return '#7fff00';      // Light - yellow-green
+            if (traffic < 450) return '#ffff00';      // Moderate - yellow
+            if (traffic < 650) return '#ff8c00';      // Heavy - orange
+            return '#ff0000';                          // Congested - red
+        }
+        
+        // Get traffic level name
+        function getTrafficLevel(traffic) {
+            if (traffic < 100) return 'Free Flow';
+            if (traffic < 250) return 'Light';
+            if (traffic < 450) return 'Moderate';
+            if (traffic < 650) return 'Heavy';
+            return 'Congested';
+        }
+        
+        // Toggle all detectors visibility
+        function toggleAllDetectors() {
+            const showAll = document.getElementById('show-all-detectors').checked;
+            
+            if (showAll && allDetectorsData.length > 0) {
+                showAllDetectorsOnMap();
+            } else {
+                hideAllDetectors();
+            }
+        }
+        
+        // Show all detectors on map
+        function showAllDetectorsOnMap() {
+            hideAllDetectors(); // Clear existing
+            
+            if (allDetectorsData.length === 0) return;
+            
+            allDetectorsLayer = L.layerGroup();
+            
+            allDetectorsData.forEach(det => {
+                const color = getTrafficColor(det.traffic);
+                const marker = L.circleMarker([det.lat, det.lon], {
+                    radius: 6,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 1,
+                    opacity: 0.8,
+                    fillOpacity: 0.7
+                });
+                
+                marker.bindPopup(`
+                    <div style="text-align: center;">
+                        <b>Detector ${det.detector_id}</b><br>
+                        <small>${det.highway || 'Road'}</small><br>
+                        <hr style="margin: 5px 0;">
+                        Traffic: <b style="color: ${color}">${det.traffic.toFixed(1)}</b><br>
+                        <span style="color: ${color}">${getTrafficLevel(det.traffic)}</span>
+                    </div>
+                `);
+                
+                allDetectorsLayer.addLayer(marker);
+            });
+            
+            allDetectorsLayer.addTo(map);
+        }
+        
+        // Hide all detectors
+        function hideAllDetectors() {
+            if (allDetectorsLayer) {
+                map.removeLayer(allDetectorsLayer);
+                allDetectorsLayer = null;
+            }
+        }
+        
+        // Map click handler
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lon = e.latlng.lng.toFixed(6);
+            
+            if (clickCount % 2 === 0) {
+                // Set start point
+                document.getElementById('start-lat').value = lat;
+                document.getElementById('start-lon').value = lon;
+                
+                if (startMarker) map.removeLayer(startMarker);
+                startMarker = L.marker([lat, lon], { icon: startIcon })
+                    .addTo(map)
+                    .bindPopup('Start Point')
+                    .openPopup();
+            } else {
+                // Set end point
+                document.getElementById('end-lat').value = lat;
+                document.getElementById('end-lon').value = lon;
+                
+                if (endMarker) map.removeLayer(endMarker);
+                endMarker = L.marker([lat, lon], { icon: endIcon })
+                    .addTo(map)
+                    .bindPopup('End Point')
+                    .openPopup();
+            }
+            
+            clickCount++;
+        });
+        
+        // Calculate route
+        async function calculateRoute() {
+            const startLat = parseFloat(document.getElementById('start-lat').value);
+            const startLon = parseFloat(document.getElementById('start-lon').value);
+            const endLat = parseFloat(document.getElementById('end-lat').value);
+            const endLon = parseFloat(document.getElementById('end-lon').value);
+            const departureTime = document.getElementById('departure-time').value + ':00';
+            const model = document.getElementById('model').value;
+            
+            // Validation
+            if (isNaN(startLat) || isNaN(startLon) || isNaN(endLat) || isNaN(endLon)) {
+                showError('Please enter valid coordinates');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('calculate-btn').disabled = true;
+            hideError();
+            
+            try {
+                const response = await fetch(`${API_BASE}/routes/optimize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        start_lat: startLat,
+                        start_lon: startLon,
+                        end_lat: endLat,
+                        end_lon: endLon,
+                        model: model,
+                        departure_time: departureTime
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.message || 'Failed to calculate route');
+                }
+            } catch (error) {
+                showError('Failed to connect to API: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('calculate-btn').disabled = false;
+            }
+        }
+        
+        // Display results on map and sidebar
+        function displayResults(data) {
+            // Clear previous routes
+            clearRoutes();
+            
+            // Store all detectors data and update counter
+            if (data.all_detectors) {
+                allDetectorsData = data.all_detectors;
+                document.getElementById('detector-count').textContent = allDetectorsData.length;
+                
+                // If toggle is on, show detectors
+                if (document.getElementById('show-all-detectors').checked) {
+                    showAllDetectorsOnMap();
+                }
+            }
+            
+            // Show results panel
+            document.getElementById('results').style.display = 'block';
+            
+            // Update shortest path stats
+            if (data.shortest_path) {
+                document.getElementById('shortest-waypoints').textContent = data.shortest_path.path_length;
+                document.getElementById('shortest-distance').textContent = 
+                    data.shortest_path.distance_meters ? (data.shortest_path.distance_meters / 1000).toFixed(2) + ' km' : '-';
+                document.getElementById('shortest-traffic').textContent = 
+                    data.shortest_path.avg_traffic ? data.shortest_path.avg_traffic.toFixed(1) : '-';
+                document.getElementById('shortest-max-traffic').textContent = 
+                    data.shortest_path.max_traffic ? data.shortest_path.max_traffic.toFixed(1) : '-';
+                
+                // Build waypoint list for shortest path
+                buildWaypointList(data.shortest_path, 'shortest-waypoint-list');
+            }
+            
+            // Update fastest path stats
+            if (data.fastest_path) {
+                document.getElementById('fastest-waypoints').textContent = data.fastest_path.path_length;
+                document.getElementById('fastest-distance').textContent = 
+                    data.fastest_path.distance_meters ? (data.fastest_path.distance_meters / 1000).toFixed(2) + ' km' : '-';
+                document.getElementById('fastest-traffic').textContent = 
+                    data.fastest_path.avg_traffic ? data.fastest_path.avg_traffic.toFixed(1) : '-';
+                document.getElementById('fastest-max-traffic').textContent = 
+                    data.fastest_path.max_traffic ? data.fastest_path.max_traffic.toFixed(1) : '-';
+                
+                // Build waypoint list for fastest path
+                buildWaypointList(data.fastest_path, 'fastest-waypoint-list');
+            }
+            
+            // Update comparison
+            if (data.comparison) {
+                document.getElementById('comparison-same').textContent = data.comparison.same_path ? '✅ Yes' : '❌ No';
+                
+                // Calculate traffic difference
+                const shortestAvg = data.shortest_path?.avg_traffic || 0;
+                const fastestAvg = data.fastest_path?.avg_traffic || 0;
+                const diff = shortestAvg - fastestAvg;
+                if (diff > 0) {
+                    document.getElementById('comparison-traffic-diff').textContent = `Fastest saves ${diff.toFixed(1)}`;
+                    document.getElementById('comparison-traffic-diff').style.color = '#33cc33';
+                } else if (diff < 0) {
+                    document.getElementById('comparison-traffic-diff').textContent = `Shortest has ${Math.abs(diff).toFixed(1)} less`;
+                    document.getElementById('comparison-traffic-diff').style.color = '#3388ff';
+                } else {
+                    document.getElementById('comparison-traffic-diff').textContent = 'Same traffic';
+                    document.getElementById('comparison-traffic-diff').style.color = '#888';
+                }
+            }
+            
+            // Draw routes on map
+            drawRoutes(data);
+            
+            // Fit bounds
+            if (data.shortest_path && data.shortest_path.polyline) {
+                const bounds = L.latLngBounds(
+                    data.shortest_path.polyline.map(p => [p[1], p[0]])
+                );
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+        
+        // Draw routes on map
+        function drawRoutes(data) {
+            // Helper function to get traffic from dict or array
+            function getTrafficValue(trafficLevels, detectorId, index) {
+                if (!trafficLevels) return null;
+                if (typeof trafficLevels === 'object' && !Array.isArray(trafficLevels)) {
+                    return trafficLevels[detectorId];
+                }
+                if (Array.isArray(trafficLevels)) {
+                    return trafficLevels[index];
+                }
+                return null;
+            }
+            
+            // Draw shortest path (blue, dashed)
+            if (data.shortest_path && data.shortest_path.polyline) {
+                const coords = data.shortest_path.polyline.map(p => [p[1], p[0]]);
+                const avgTraffic = data.shortest_path.avg_traffic || 0;
+                
+                shortestPathLayer = L.layerGroup();
+                
+                const shortestLine = L.polyline(coords, {
+                    color: '#3388ff',
+                    weight: 6,
+                    opacity: 0.8,
+                    dashArray: '10, 10'
+                }).bindPopup(`
+                    <strong>Shortest Path (Dijkstra)</strong><br>
+                    Distance: ${data.shortest_path.distance_meters ? (data.shortest_path.distance_meters / 1000).toFixed(2) + ' km' : '-'}<br>
+                    Detectors: ${data.shortest_path.path_length}<br>
+                    Avg Traffic: ${avgTraffic.toFixed(1)}<br>
+                    Max Traffic: ${data.shortest_path.max_traffic ? data.shortest_path.max_traffic.toFixed(1) : '-'}
+                `);
+                
+                shortestPathLayer.addLayer(shortestLine);
+                
+                // Add detector markers for shortest path
+                if (data.shortest_path.coordinates) {
+                    data.shortest_path.coordinates.forEach((coord, index) => {
+                        const traffic = getTrafficValue(data.shortest_path.traffic_levels, coord.detector_id, index) || coord.traffic;
+                        const color = traffic ? getTrafficColor(traffic) : '#3388ff';
+                        
+                        const marker = L.circleMarker([coord.lat, coord.lon], {
+                            radius: 7,
+                            fillColor: color,
+                            color: '#3388ff',
+                            weight: 2,
+                            fillOpacity: 0.9
+                        }).bindPopup(`
+                            <strong>Detector ${coord.detector_id}</strong><br>
+                            ${coord.name}<br>
+                            Traffic: ${traffic ? traffic.toFixed(1) + ' (' + getTrafficLevel(traffic) + ')' : '-'}<br>
+                            <em style="color:#3388ff;">Shortest Path</em>
+                        `);
+                        
+                        shortestPathLayer.addLayer(marker);
+                    });
+                }
+                
+                shortestPathLayer.addTo(map);
+            }
+            
+            // Draw fastest path using road geometry (polyline) with traffic color
+            if (data.fastest_path && data.fastest_path.polyline) {
+                const polylineCoords = data.fastest_path.polyline.map(p => [p[1], p[0]]);
+                const avgTraffic = data.fastest_path.avg_traffic || 400;
+                
+                // Get color based on average traffic
+                const pathColor = getTrafficColor(avgTraffic);
+                
+                // Draw the full polyline with road geometry
+                fastestPathLayer = L.layerGroup();
+                
+                const mainPath = L.polyline(polylineCoords, {
+                    color: pathColor,
+                    weight: 8,
+                    opacity: 0.9
+                }).bindPopup(`
+                    <strong>Fastest Path (Traffic-Aware)</strong><br>
+                    Distance: ${data.fastest_path.distance_meters ? (data.fastest_path.distance_meters / 1000).toFixed(2) + ' km' : '-'}<br>
+                    Detectors: ${data.fastest_path.path_length}<br>
+                    Avg Traffic: ${avgTraffic.toFixed(1)} (${getTrafficLevel(avgTraffic)})<br>
+                    Max Traffic: ${data.fastest_path.max_traffic ? data.fastest_path.max_traffic.toFixed(1) : '-'}
+                `);
+                
+                fastestPathLayer.addLayer(mainPath);
+                fastestPathLayer.addTo(map);
+                
+                // Add detector markers for fastest path
+                const detectorCoords = data.fastest_path.coordinates || [];
+                detectorsLayer = L.layerGroup();
+                
+                detectorCoords.forEach((coord, index) => {
+                    const traffic = getTrafficValue(data.fastest_path.traffic_levels, coord.detector_id, index) || coord.traffic || avgTraffic;
+                    const color = getTrafficColor(traffic);
+                    
+                    const marker = L.circleMarker([coord.lat, coord.lon], {
+                        radius: 10,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.9
+                    }).bindPopup(`
+                        <strong>Detector ${coord.detector_id}</strong><br>
+                        ${coord.name}<br>
+                        Traffic: ${traffic.toFixed(1)} (${getTrafficLevel(traffic)})<br>
+                        Time: ${coord.time}<br>
+                        <em style="color:#33cc33;">Fastest Path</em>
+                    `);
+                    
+                    detectorsLayer.addLayer(marker);
+                });
+                
+                detectorsLayer.addTo(map);
+            }
+            
+            // Add start marker
+            if (data.start_detector) {
+                if (startMarker) map.removeLayer(startMarker);
+                startMarker = L.marker(
+                    [data.start_detector.lat, data.start_detector.lon],
+                    { icon: startIcon }
+                ).addTo(map).bindPopup(`
+                    <strong>Start: ${data.start_detector.name}</strong><br>
+                    Detector ID: ${data.start_detector.detector_id}<br>
+                    Distance from input: ${data.start_detector.distance_km} km
+                `);
+            }
+            
+            // Add end marker
+            if (data.end_detector) {
+                if (endMarker) map.removeLayer(endMarker);
+                endMarker = L.marker(
+                    [data.end_detector.lat, data.end_detector.lon],
+                    { icon: endIcon }
+                ).addTo(map).bindPopup(`
+                    <strong>End: ${data.end_detector.name}</strong><br>
+                    Detector ID: ${data.end_detector.detector_id}<br>
+                    Distance from input: ${data.end_detector.distance_km} km
+                `);
+            }
+        }
+        
+        // Build waypoint list in sidebar
+        function buildWaypointList(pathData, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (!pathData.coordinates) return;
+            
+            // traffic_levels can be a dict {detector_id: traffic} or array
+            const trafficLevels = pathData.traffic_levels || {};
+            const isDict = typeof trafficLevels === 'object' && !Array.isArray(trafficLevels);
+            
+            pathData.coordinates.forEach((coord, index) => {
+                let traffic = null;
+                
+                if (isDict) {
+                    // Dictionary format: {detector_id: traffic_value}
+                    traffic = trafficLevels[coord.detector_id];
+                } else if (Array.isArray(trafficLevels)) {
+                    // Array format
+                    traffic = trafficLevels[index];
+                }
+                
+                // Fallback to coord.traffic if available
+                if (traffic === null || traffic === undefined) {
+                    traffic = coord.traffic;
+                }
+                
+                const color = traffic !== null && traffic !== undefined ? getTrafficColor(traffic) : '#888';
+                const trafficText = traffic !== null && traffic !== undefined ? traffic.toFixed(1) : '-';
+                const levelText = traffic !== null && traffic !== undefined ? getTrafficLevel(traffic) : '';
+                
+                const item = document.createElement('div');
+                item.className = 'waypoint-item';
+                item.innerHTML = `
+                    <div class="waypoint-marker" style="background: ${color};">${index + 1}</div>
+                    <div class="waypoint-info">
+                        <div class="waypoint-name">${coord.name || 'Detector ' + coord.detector_id}</div>
+                        <div class="waypoint-traffic">
+                            ID: ${coord.detector_id} | Traffic: ${trafficText} ${levelText ? '(' + levelText + ')' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Click to zoom
+                item.onclick = () => {
+                    map.setView([coord.lat, coord.lon], 16);
+                };
+                item.style.cursor = 'pointer';
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // Clear routes from map
+        function clearRoutes() {
+            if (shortestPathLayer) {
+                map.removeLayer(shortestPathLayer);
+                shortestPathLayer = null;
+            }
+            if (fastestPathLayer) {
+                map.removeLayer(fastestPathLayer);
+                fastestPathLayer = null;
+            }
+            if (detectorsLayer) {
+                map.removeLayer(detectorsLayer);
+                detectorsLayer = null;
+            }
+        }
+        
+        // Clear all
+        function clearAll() {
+            clearRoutes();
+            hideAllDetectors();
+            
+            if (startMarker) {
+                map.removeLayer(startMarker);
+                startMarker = null;
+            }
+            if (endMarker) {
+                map.removeLayer(endMarker);
+                endMarker = null;
+            }
+            
+            document.getElementById('start-lat').value = '';
+            document.getElementById('start-lon').value = '';
+            document.getElementById('end-lat').value = '';
+            document.getElementById('end-lon').value = '';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('show-all-detectors').checked = false;
+            document.getElementById('detector-count').textContent = '0';
+            allDetectorsData = [];
+            
+            clickCount = 0;
+            hideError();
+        }
+        
+        // Show error
+        function showError(message) {
+            const errorEl = document.getElementById('error-msg');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.classList.add('active');
+        }
+        
+        // Hide error
+        function hideError() {
+            document.getElementById('error-msg').classList.remove('active');
+        }
+        
+        // Initialize with default markers
+        function init() {
+            const startLat = parseFloat(document.getElementById('start-lat').value);
+            const startLon = parseFloat(document.getElementById('start-lon').value);
+            const endLat = parseFloat(document.getElementById('end-lat').value);
+            const endLon = parseFloat(document.getElementById('end-lon').value);
+            
+            if (!isNaN(startLat) && !isNaN(startLon)) {
+                startMarker = L.marker([startLat, startLon], { icon: startIcon }).addTo(map);
+            }
+            
+            if (!isNaN(endLat) && !isNaN(endLon)) {
+                endMarker = L.marker([endLat, endLon], { icon: endIcon }).addTo(map);
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>

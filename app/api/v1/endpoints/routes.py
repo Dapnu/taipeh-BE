@@ -39,6 +39,36 @@ def get_detector_info(detector_id: int, detector_service, distance_km: Optional[
     return None
 
 
+def categorize_traffic_levels(traffic_list: List[float]) -> Dict[str, int]:
+    """
+    Categorize traffic levels into low/moderate/high/severe.
+    
+    Thresholds:
+    - low: < 25
+    - moderate: 25-50
+    - high: 50-100
+    - severe: >= 100
+    """
+    categories = {
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "severe": 0
+    }
+    
+    for traffic in traffic_list:
+        if traffic < 25:
+            categories["low"] += 1
+        elif traffic < 50:
+            categories["moderate"] += 1
+        elif traffic < 100:
+            categories["high"] += 1
+        else:
+            categories["severe"] += 1
+    
+    return categories
+
+
 @router.post("/optimize", response_model=RouteResponse)
 async def optimize_route(request: RouteRequest) -> RouteResponse:
     """
@@ -209,12 +239,16 @@ async def optimize_route(request: RouteRequest) -> RouteResponse:
         if hasattr(shortest_result, 'distance_meters') and shortest_result.distance_meters:
             route_json["properties"]["distance_meters"] = round(shortest_result.distance_meters, 2)
         
+        # Calculate traffic categories
+        traffic_categories = categorize_traffic_levels(shortest_traffic_list) if shortest_traffic_list else None
+        
         shortest_path_info = PathInfo(
             path=shortest_result.path,
             path_length=len(shortest_result.path),
             total_weight=round(shortest_result.total_weight, 4),
             algorithm="astar",
             traffic_levels=shortest_result.traffic_levels if shortest_result.traffic_levels else None,
+            traffic_categories=traffic_categories,
             avg_traffic=round(sum(shortest_traffic_list) / len(shortest_traffic_list), 1) if shortest_traffic_list else None,
             max_traffic=round(max(shortest_traffic_list), 1) if shortest_traffic_list else None,
             min_traffic=round(min(shortest_traffic_list), 1) if shortest_traffic_list else None,
@@ -246,12 +280,16 @@ async def optimize_route(request: RouteRequest) -> RouteResponse:
         route_json["properties"]["algorithm"] = "astar"
         route_json["properties"]["avg_traffic"] = round(sum(fastest_traffic_list) / len(fastest_traffic_list), 1) if fastest_traffic_list else None
         
+        # Calculate traffic categories
+        traffic_categories = categorize_traffic_levels(fastest_traffic_list) if fastest_traffic_list else None
+        
         fastest_path_info = PathInfo(
             path=fastest_result.path,
             path_length=len(fastest_result.path),
             total_weight=round(fastest_result.total_weight, 4),
             algorithm="astar",
             traffic_levels=fastest_result.traffic_levels,  # Keep as dict for detailed view
+            traffic_categories=traffic_categories,
             avg_traffic=round(sum(fastest_traffic_list) / len(fastest_traffic_list), 1) if fastest_traffic_list else None,
             max_traffic=round(max(fastest_traffic_list), 1) if fastest_traffic_list else None,
             min_traffic=round(min(fastest_traffic_list), 1) if fastest_traffic_list else None,

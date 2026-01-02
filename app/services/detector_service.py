@@ -7,6 +7,7 @@ Provides coordinate-based search and distance calculations.
 
 import csv
 import logging
+import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from math import radians, cos, sin, asin, sqrt
@@ -243,6 +244,125 @@ class DetectorService:
         # Sort by distance
         detectors_in_radius.sort(key=lambda x: x[1])
         return detectors_in_radius
+    
+    def get_traffic_snapshot(
+        self, 
+        model: str, 
+        time_str: str,
+        data_dir: Optional[Path] = None
+    ) -> Dict:
+        """
+        Get traffic snapshot for all detectors at specific time.
+        
+        Args:
+            model: Model name (e.g., 'xgboost', 'gcn_gru')
+            time_str: Time in HH:MM:SS format
+            data_dir: Optional data directory path
+            
+        Returns:
+            Dictionary with detector traffic data and statistics
+        """
+        if data_dir is None:
+            data_dir = Path(__file__).parent.parent.parent / "data"
+        
+        # Convert time to prediction_chain_step (0-479, 3-minute intervals)
+        time_parts = time_str.split(':')
+        hour = int(time_parts[0])
+        minute = int(time_parts[1])
+        total_minutes = hour * 60 + minute
+        interval = total_minutes // 3  # 3-minute intervals
+        
+        # Load prediction file
+        prediction_file = data_dir / f"predictions_oct1_2017_{model}.csv"
+        
+        if not prediction_file.exists():
+            logger.error(f"Prediction file not found: {prediction_file}")
+            return {
+                "success": False,
+                "error": f"Model '{model}' predictions not found"
+            }
+        
+        try:
+            # Load predictions
+            df = pd.read_csv(prediction_file)
+            
+            # Filter for specific interval
+            interval_data = df[df['prediction_chain_step'] == interval]
+            
+            # Build detector list with traffic
+            detectors_with_traffic = []
+            traffic_values = []
+            
+            for _, row in interval_data.iterrows():
+                detid = int(row['detid'])
+                traffic = float(row['traffic_predict'])
+                
+                detector = self.get_detector_by_id(detid)
+                if detector:
+                    # Categorize traffic
+                    if traffic < 25:
+                        category = "low"
+                    elif traffic < 50:
+                        category = "moderate"
+                    elif traffic < 100:
+                        category = "high"
+                    else:
+                        category = "severe"
+                    
+                    detectors_with_traffic.append({
+                        "detid": detid,
+                        "lat": detector.latitude,
+                        "lon": detector.longitude,
+                        "traffic": round(traffic, 2),
+                        "category": category,
+                        "road": detector.road
+                    })
+                    traffic_values.append(traffic)
+            
+            # Calculate statistics
+            if traffic_values:
+                low_count = sum(1 for t in traffic_values if t < 25)
+                moderate_count = sum(1 for t in traffic_values if 25 <= t < 50)
+                high_count = sum(1 for t in traffic_values if 50 <= t < 100)
+                severe_count = sum(1 for t in traffic_values if t >= 100)
+                
+                statistics = {
+                    "total_detectors": len(traffic_values),
+                    "avg_traffic": round(sum(traffic_values) / len(traffic_values), 2),
+                    "min_traffic": round(min(traffic_values), 2),
+                    "max_traffic": round(max(traffic_values), 2),
+                    "low_count": low_count,
+                    "moderate_count": moderate_count,
+                    "high_count": high_count,
+                    "severe_count": severe_count
+                }
+            else:
+                statistics = {
+                    "total_detectors": 0,
+                    "avg_traffic": 0,
+                    "min_traffic": 0,
+                    "max_traffic": 0,
+                    "low_count": 0,
+                    "moderate_count": 0,
+                    "high_count": 0,
+                    "severe_count": 0
+                }
+            
+            return {
+                "success": True,
+                "model": model,
+                "time": time_str,
+                "interval": interval,
+                "detectors": detectors_with_traffic,
+                "statistics": statistics
+            }
+        
+        except Exception as e:
+            logger.error(f"Error loading traffic snapshot: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
 # Global detector service instance

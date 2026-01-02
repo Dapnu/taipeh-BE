@@ -1,0 +1,155 @@
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Route line styling */
+.route-line {
+  stroke: #d4c5a0;
+  stroke-width: 4;
+  stroke-opacity: 0.8;
+}
+
+/* Marker popup styling - Minimalist */
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.98);
+  color: #1f2937;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+}
+
+.leaflet-popup-content {
+  margin: 14px 16px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.leaflet-popup-content strong {
+  color: #111827;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.98);
+  border: none;
+  box-shadow: none;
+}
+
+/* Zoom controls - Minimalist */
+.leaflet-control-zoom a {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #374151 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+  margin-bottom: 6px !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  color: #1f2937 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #6b7280 !important;
+  font-size: 0.75rem !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #4b5563 !important;
+}
+
+/* Map Legend - Minimalist */
+.map-legend {
+  position: absolute;
+  bottom: 30px;
+  left: 10px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.map-legend .legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.map-legend .legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.map-legend .legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 2px solid rgba(255, 255, 255, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.map-legend .legend-dot.start {
+  background-color: #10b981;
+}
+
+.map-legend .legend-dot.end {
+  background-color: #ef4444;
+}
+
+.map-legend .legend-line {
+  width: 20px;
+  height: 3px;
+  background-color: #2194ce;
+  margin-right: 10px;
+  border-radius: 2px;
+}
+
+.map-legend .legend-circle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.map-legend .legend-title {
+  color: #111827;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-top: 12px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.7;
+}
