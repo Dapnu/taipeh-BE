@@ -38,7 +38,7 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_URL=http://backend:8999
+      - VITE_API_URL=https://taipeisim-be.ruangopini.app
     restart: unless-stopped
     networks:
       - app-network
